@@ -3,7 +3,7 @@ require 'omniauth-oauth2'
 module OmniAuth
   module Strategies
     class Govbr < OmniAuth::Strategies::OAuth2
-      SCOPES = %i(openid email profile govbr_confiabilidades)
+      SCOPES = %i(openid email profile cpf govbr_confiabilidades)
 
       option :name, 'govbr'
       option :pkce, true
@@ -23,7 +23,8 @@ module OmniAuth
           name: raw_info['name'],
           nickname: nickname,
           email: raw_info['email'],
-          locale: raw_info['locale']
+          locale: raw_info['locale'],
+          cpf: raw_info["cpf"]&.gsub(/\D/, "")
         }
       end
 
