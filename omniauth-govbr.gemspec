@@ -5,8 +5,8 @@ require_relative "lib/omniauth/govbr/version"
 Gem::Specification.new do |spec|
   spec.name = "omniauth-govbr"
   spec.version = OmniAuth::Govbr::VERSION
-  spec.authors = ["Paulo Tada"]
-  spec.email = ["paulohtfs@gmail.com"]
+  spec.authors = ["LabLivre"]
+  spec.email = ["lablivreunb@gmail.com"]
 
   spec.summary = "Unofficial OmniAuth OAuth2 for GovBR"
   spec.description = "Implementing OmniAuth OAuth2 strategy for GovBR"
