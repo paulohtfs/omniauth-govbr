@@ -2,14 +2,14 @@
 
 require "test_helper"
 
-class Omniauth::GovbrTest < Test::Unit::TestCase
-  test "VERSION" do
-    assert do
-      ::Omniauth::Govbr.const_defined?(:VERSION)
+module Omniauth
+  class GovbrTest < Test::Unit::TestCase
+    test "has a version number" do
+      assert_match(/\A\d+\.\d+\.\d+/, ::Omniauth::Govbr::VERSION)
     end
-  end
 
-  test "something useful" do
-    assert_equal("expected", "actual")
+    test "loads the govbr strategy" do
+      assert(defined?(::OmniAuth::Strategies::Govbr))
+    end
   end
 end

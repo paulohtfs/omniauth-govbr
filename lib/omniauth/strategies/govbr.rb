@@ -1,29 +1,32 @@
-require 'omniauth-oauth2'
+# frozen_string_literal: true
+
+require "omniauth-oauth2"
 
 module OmniAuth
   module Strategies
+    # OmniAuth strategy for gov.br login (OpenID Connect authorization code flow with PKCE).
     class Govbr < OmniAuth::Strategies::OAuth2
-      SCOPES = %i(openid email profile govbr_confiabilidades)
+      SCOPES = %i[openid email profile govbr_confiabilidades].freeze
 
-      option :name, 'govbr'
+      option :name, "govbr"
       option :pkce, true
-      option :grant_type, 'authorization_code'
+      option :grant_type, "authorization_code"
       option :client_options, {
-        site: 'https://sso.staging.acesso.gov.br',
-        authorize_url: '/authorize',
-        token_url: '/token',
-        user_info_url: '/userinfo'
+        site: "https://sso.staging.acesso.gov.br",
+        authorize_url: "/authorize",
+        token_url: "/token",
+        user_info_url: "/userinfo"
       }
 
-      uid { raw_info['sub'] }
+      uid { raw_info["sub"] }
 
       info do
         {
-          sub: raw_info['sub'],
-          name: raw_info['name'],
+          sub: raw_info["sub"],
+          name: raw_info["name"],
           nickname: nickname,
-          email: raw_info['email'],
-          locale: raw_info['locale'],
+          email: raw_info["email"],
+          locale: raw_info["locale"],
           cpf: raw_info["cpf"]&.gsub(/\D/, "")
         }
       end
@@ -33,7 +36,7 @@ module OmniAuth
       end
 
       def raw_info
-        @_raw_info ||= access_token.get(options.client_options['user_info_url']).parsed || {}
+        @raw_info ||= access_token.get(options.client_options["user_info_url"]).parsed || {}
       end
 
       def callback_url
@@ -41,7 +44,7 @@ module OmniAuth
       end
 
       def nickname
-        @_nickname ||= raw_info['name'].gsub(' ', '_').downcase
+        @nickname ||= raw_info["name"].gsub(" ", "_").downcase
       end
     end
   end
