@@ -1,0 +1,24 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+variables:
+  BUNDLE_PATH: vendor/bundle
+
+test:
+  image: ruby:${RUBY_VERSION}
+  parallel:
+    matrix:
+      - RUBY_VERSION: ["3.3"]
+  cache:
+    key: gems-ruby-${RUBY_VERSION}-${CI_COMMIT_REF_SLUG}
+    paths:
+      - vendor/bundle
+  before_script:
+    - bundle install --jobs "$(nproc)"
+  script:
+    - bundle exec rake
