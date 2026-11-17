@@ -1,18 +1,22 @@
 # frozen_string_literal: true
 
+require "securerandom"
 require "omniauth-oauth2"
 
 module OmniAuth
   module Strategies
     # OmniAuth strategy for gov.br login (OpenID Connect authorization code flow with PKCE).
     class Govbr < OmniAuth::Strategies::OAuth2
-      SCOPES = %i[openid email profile govbr_confiabilidades].freeze
+      PRODUCTION_SITE = "https://sso.acesso.gov.br"
+      STAGING_SITE = "https://sso.staging.acesso.gov.br"
+      DEFAULT_SCOPE = "openid email profile"
+      NONCE_SESSION_KEY = "omniauth.govbr.nonce"
 
       option :name, "govbr"
       option :pkce, true
-      option :grant_type, "authorization_code"
+      option :scope, DEFAULT_SCOPE
       option :client_options, {
-        site: "https://sso.staging.acesso.gov.br",
+        site: PRODUCTION_SITE,
         authorize_url: "/authorize",
         token_url: "/token",
         user_info_url: "/userinfo"
@@ -26,8 +30,8 @@ module OmniAuth
           name: raw_info["name"],
           nickname: nickname,
           email: raw_info["email"],
-          locale: raw_info["locale"],
-          cpf: raw_info["cpf"]&.gsub(/\D/, "")
+          phone: raw_info["phone_number"],
+          cpf: cpf
         }
       end
 
@@ -35,16 +39,32 @@ module OmniAuth
         { raw_info: raw_info }
       end
 
+      # gov.br requires a nonce on the authorization request to bind the session to the ID token.
+      def authorize_params
+        super.tap do |params|
+          params[:nonce] ||= SecureRandom.hex(16)
+          session[NONCE_SESSION_KEY] = params[:nonce]
+        end
+      end
+
       def raw_info
-        @raw_info ||= access_token.get(options.client_options["user_info_url"]).parsed || {}
+        @raw_info ||= access_token.get(options.client_options[:user_info_url]).parsed || {}
       end
 
       def callback_url
         full_host + callback_path
       end
 
+      # gov.br returns the user's CPF as the OpenID Connect subject.
+      def cpf
+        raw_info["sub"]&.gsub(/\D/, "")
+      end
+
       def nickname
-        @nickname ||= raw_info["name"].gsub(" ", "_").downcase
+        name = raw_info["name"].to_s.strip
+        return if name.empty?
+
+        name.split.join("_").downcase
       end
     end
   end

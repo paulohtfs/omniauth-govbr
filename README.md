@@ -38,8 +38,8 @@ with gov.br to obtain a client ID and secret.
 ## Features
 
 - Sign in with gov.br through the standard OmniAuth `/auth/govbr` flow.
-- Authorization code flow with PKCE enabled by default.
-- Auth hash with the user's CPF (as `uid`), name, email and a generated nickname.
+- Authorization code flow with PKCE and `nonce` enabled by default.
+- Auth hash with the user's CPF (as `uid`), name, email, phone and a generated nickname.
 - Works against both the gov.br production and staging environments.
 
 ## Compatibility
@@ -68,9 +68,11 @@ end
 
 | Setting | Default | Description |
 |---|---|---|
-| `scope` | none | Space-separated gov.br scopes. Use `openid email profile`; add `govbr_confiabilidades` to read the account trust levels. |
+| `scope` | `openid email profile` | Space-separated gov.br scopes. Add `govbr_confiabilidades` to read the account trust levels. |
 | `pkce` | `true` | Sends a PKCE code challenge, as required by gov.br. |
-| `client_options[:site]` | `https://sso.staging.acesso.gov.br` | gov.br SSO host. Set `https://sso.acesso.gov.br` in production. |
+
+Each authorization request also carries a random `nonce`, as gov.br requires. It is kept in the session under `omniauth.govbr.nonce`.
+| `client_options[:site]` | `https://sso.acesso.gov.br` | gov.br SSO host. Use `https://sso.staging.acesso.gov.br` (`OmniAuth::Strategies::Govbr::STAGING_SITE`) for testing. |
 | `client_options[:authorize_url]` | `/authorize` | Authorization endpoint path. |
 | `client_options[:token_url]` | `/token` | Token endpoint path. |
 | `client_options[:user_info_url]` | `/userinfo` | User info endpoint path. |
@@ -102,10 +104,10 @@ After login, gov.br redirects to `/auth/govbr/callback` and `request.env["omniau
   info: {
     sub: "12345678900",
     name: "Maria da Silva",
-    nickname: "maria_da_silva",     # name, lower case, spaces replaced by "_"
+    nickname: "maria_da_silva",     # name, lower case, spaces replaced by "_"; nil without a name
     email: "maria@example.com",
-    locale: nil,
-    cpf: "12345678900"              # digits only
+    phone: "61999999999",           # nil unless gov.br returns phone_number
+    cpf: "12345678900"              # digits of "sub"
   },
   credentials: { token: "...", expires_at: 1_700_000_000, expires: true },
   extra: { raw_info: { ... } }      # full response of the /userinfo endpoint
@@ -115,8 +117,8 @@ After login, gov.br redirects to `/auth/govbr/callback` and `request.env["omniau
 ## Privacy and data
 
 The gem stores nothing. On each login it receives personal data from gov.br and passes it to the host application
-in the auth hash: CPF (`uid`, `info.sub`, `info.cpf`), full name, email, and everything else the `/userinfo` endpoint
-returns in `extra.raw_info` (for example phone number and profile picture, depending on the granted scopes). The CPF
+in the auth hash: CPF (`uid`, `info.sub`, `info.cpf`), full name, email, phone number, and everything else the `/userinfo` endpoint
+returns in `extra.raw_info` (for example the profile picture URL, depending on the granted scopes). The CPF
 is personal data under the LGPD (Lei nº 13.709/2018). The host application decides what to keep, for how long, and
 on which legal basis; store only what you need.
 

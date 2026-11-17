@@ -38,8 +38,8 @@ obter um client ID e um client secret.
 ## Funcionalidades
 
 - Login com gov.br pelo fluxo padrão do OmniAuth em `/auth/govbr`.
-- Fluxo authorization code com PKCE ativado por padrão.
-- Auth hash com o CPF do usuário (como `uid`), nome, email e um apelido gerado.
+- Fluxo authorization code com PKCE e `nonce` ativados por padrão.
+- Auth hash com o CPF do usuário (como `uid`), nome, email, telefone e um apelido gerado.
 - Funciona com os ambientes de produção e de homologação (staging) do gov.br.
 
 ## Compatibilidade
@@ -68,9 +68,11 @@ end
 
 | Opção | Padrão | Descrição |
 |---|---|---|
-| `scope` | nenhum | Escopos do gov.br separados por espaço. Use `openid email profile`; adicione `govbr_confiabilidades` para ler os níveis de confiabilidade da conta. |
+| `scope` | `openid email profile` | Escopos do gov.br separados por espaço. Adicione `govbr_confiabilidades` para ler os níveis de confiabilidade da conta. |
 | `pkce` | `true` | Envia o code challenge PKCE, exigido pelo gov.br. |
-| `client_options[:site]` | `https://sso.staging.acesso.gov.br` | Host do SSO gov.br. Use `https://sso.acesso.gov.br` em produção. |
+
+Cada requisição de autorização também leva um `nonce` aleatório, exigido pelo gov.br. Ele fica na sessão em `omniauth.govbr.nonce`.
+| `client_options[:site]` | `https://sso.acesso.gov.br` | Host do SSO gov.br. Use `https://sso.staging.acesso.gov.br` (`OmniAuth::Strategies::Govbr::STAGING_SITE`) para testes. |
 | `client_options[:authorize_url]` | `/authorize` | Caminho do endpoint de autorização. |
 | `client_options[:token_url]` | `/token` | Caminho do endpoint de token. |
 | `client_options[:user_info_url]` | `/userinfo` | Caminho do endpoint de dados do usuário. |
@@ -102,10 +104,10 @@ Depois do login, o gov.br redireciona para `/auth/govbr/callback` e `request.env
   info: {
     sub: "12345678900",
     name: "Maria da Silva",
-    nickname: "maria_da_silva",     # nome em minúsculas, espaços trocados por "_"
+    nickname: "maria_da_silva",     # nome em minúsculas, espaços trocados por "_"; nil sem nome
     email: "maria@example.com",
-    locale: nil,
-    cpf: "12345678900"              # apenas dígitos
+    phone: "61999999999",           # nil se o gov.br não retornar phone_number
+    cpf: "12345678900"              # dígitos do "sub"
   },
   credentials: { token: "...", expires_at: 1_700_000_000, expires: true },
   extra: { raw_info: { ... } }      # resposta completa do endpoint /userinfo
@@ -115,8 +117,8 @@ Depois do login, o gov.br redireciona para `/auth/govbr/callback` e `request.env
 ## Privacidade e dados
 
 A gem não armazena nada. A cada login ela recebe dados pessoais do gov.br e os repassa à aplicação no auth hash: CPF
-(`uid`, `info.sub`, `info.cpf`), nome completo, email e tudo o mais que o endpoint `/userinfo` retornar em
-`extra.raw_info` (por exemplo telefone e foto de perfil, conforme os escopos concedidos). O CPF é dado pessoal pela
+(`uid`, `info.sub`, `info.cpf`), nome completo, email, telefone e tudo o mais que o endpoint `/userinfo` retornar em
+`extra.raw_info` (por exemplo a URL da foto de perfil, conforme os escopos concedidos). O CPF é dado pessoal pela
 LGPD (Lei nº 13.709/2018). A aplicação decide o que guardar, por quanto tempo e com qual base legal; guarde só o
 necessário.
 

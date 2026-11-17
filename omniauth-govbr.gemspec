@@ -4,7 +4,7 @@ require_relative "lib/omniauth/govbr/version"
 
 Gem::Specification.new do |spec|
   spec.name = "omniauth-govbr"
-  spec.version = Omniauth::Govbr::VERSION
+  spec.version = OmniAuth::Govbr::VERSION
   spec.authors = ["Paulo Tada"]
   spec.email = ["paulohtfs@gmail.com"]
 
@@ -14,7 +14,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0.0"
   spec.homepage = "https://gitlab.com/lappis-unb/decidimbr/components-brasil-participativo/omniauth-govbr"
 
-  spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/-/blob/main/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/-/issues"
@@ -33,8 +32,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "omniauth"
-  spec.add_dependency "omniauth-oauth2"
+  spec.add_dependency "omniauth", "~> 2.0"
+  spec.add_dependency "omniauth-oauth2", "~> 1.8"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
